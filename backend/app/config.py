@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     data_dir: Path = Path("/data")
     static_dir: Path | None = None  # built frontend (served from the same origin)
     cifar10_archive: Path = Path(__file__).resolve().parent / "challenges/cifar10/cifar10_test.npz"
+    pneumoniamnist_archive: Path = (
+        Path(__file__).resolve().parent / "challenges/pneumoniamnist/pneumoniamnist_test.npz"
+    )
 
     # --- auth ----------------------------------------------------------------
     teacher_secret: str = "change-me"

@@ -5,8 +5,9 @@ machine-learning teaching. Students train models in Google Colab, upload a small
 shared web app, the server scores it against hidden labels, and a projector view updates live
 and shows each student's solution.
 
-Three challenges ship with it: **Two Moons — Decision Boundary Challenge**,
-**Small-data MNIST — Fix the Training Recipe**, and **CIFAR-10 — Design a CNN**
+Four challenges ship with it: **Two Moons — Decision Boundary Challenge**,
+**Small-data MNIST — Fix the Training Recipe**, **CIFAR-10 — Design a CNN**, and
+**PneumoniaMNIST — Classify Chest X-rays**
 (see [Available challenges](#41-available-challenges)).
 The architecture keeps submission handling, evaluation and visualization as independent,
 swappable modules so very different challenges can be added without rewriting the platform.
@@ -281,8 +282,8 @@ docker compose up -d --build
    can actually type, not `localhost`.
 4. Students open `http://<TEACHER-IP>:8000`, enter the code and a display name. They appear
    immediately on the projector in the "no evaluated submission yet" row.
-5. Students work in Colab (`examples/moons_colab.ipynb`, `examples/mnist_small_colab.ipynb`, or
-   `examples/cifar10_colab.ipynb`, also
+5. Students work in Colab (`examples/moons_colab.ipynb`, `examples/mnist_small_colab.ipynb`,
+   `examples/cifar10_colab.ipynb`, or `examples/pneumoniamnist_colab.ipynb`, also
    downloadable from the student page). The notebook fetches the public data from
    `examples/data/` on GitHub, because Colab cannot reach a server on the classroom LAN. Students download their `predictions.csv` or
    `submission.zip` and upload it on their student page. Their blob moves to its score within a second or two (ZIP bundles take a few seconds
@@ -350,11 +351,40 @@ and record their experiments. Python bundles only: `submission.zip` contains the
   labels are public, so students must train from scratch on training data only and use
   validation, rather than test labels, for model selection.
 
+**PneumoniaMNIST — Classify Chest X-rays** (`pneumoniamnist`). Students import
+`PneumoniaMNIST` from MedMNIST in [the Colab starter notebook](https://colab.research.google.com/github/jamie-duell/interactive_coding-main/blob/main/examples/pneumoniamnist_colab.ipynb),
+then develop a CNN for normal versus pneumonia classification using the standard
+**28×28 grayscale** benchmark images. The notebook uses the official **4,708 training**
+and **524 validation** images; the server scores **624 official test images**.
+
+* The projector leaderboard ranks by **test accuracy (%)**, with **AUROC** (pneumonia
+  probability, class 1) and **balanced accuracy** (mean recall across both classes) as
+  secondary metrics. These help students explore the effect of class imbalance.
+* Students edit `model.py`, accepting `(N, 1, 28, 28)` tensors and returning two logits,
+  then train and export `submission.zip`. The ZIP contains the architecture, the best
+  validation checkpoint, and CPU inference. Training and inference divide pixels by
+  255 and normalise with mean/std 0.5. The server receives `(N, 784)` row-major raw
+  pixels and validates `(N, 2)` probabilities in the order **normal, pneumonia**.
+* Docker automatically downloads the official MedMNIST archive, verifies its published
+  checksum, and retains only the test split in `/opt/arena/pneumoniamnist_test.npz`.
+  The inference runner does not need MedMNIST, torchvision, or network access. Rebuild
+  with `docker compose up -d --build`, then choose **PneumoniaMNIST — Classify Chest
+  X-rays** when creating a session on `/teacher`.
+* For local backend development, run `python -m app.scripts.build_pneumoniamnist` from
+  `backend/`. `--src <pneumoniamnist.npz>` accepts an already downloaded standard 28×28
+  archive. `PNEUMONIAMNIST_ARCHIVE` can point to the prepared test archive.
+* Attribution: [MedMNIST v2, Yang et al., Scientific Data (2023)](https://www.nature.com/articles/s41597-022-01721-8),
+  derived from [Kermany et al., Cell (2018)](https://doi.org/10.1016/j.cell.2018.02.010).
+  [Official metadata](https://github.com/MedMNIST/MedMNIST/blob/main/medmnist/info.py)
+  lists PneumoniaMNIST under **CC BY 4.0**. This challenge uses the published resized
+  images and official splits. Students must train on training labels and select models
+  using validation; test labels are public, so the exercise relies on classroom trust.
+
 The repository is configured for **`jamie-duell/interactive_coding-main`**, branch **`main`**.
 Push these files to that repository before using the direct **Open in Google Colab** links.
 The downloadable notebooks remain available from the student page. If the repository is
 renamed, update `frontend/src/lib/repository.ts` and the public-data URLs in the Moons and
-MNIST notebooks. CIFAR-10 data comes from the official dataset host directly.
+MNIST notebooks. CIFAR-10 and PneumoniaMNIST data come from their official hosts directly.
 
 ### Demo mode
 
@@ -391,14 +421,16 @@ dnnls-arena/
 │   │   │                           VisualizationType, registries
 │   │   ├── challenges/moons/       the reference challenge (data, instructions, resources)
 │   │   ├── challenges/mnist_small/ small-data MNIST challenge (+ committed mnist_small.npz)
+│   │   ├── challenges/cifar10/     CIFAR-10 CNN challenge (test data prepared at build time)
+│   │   ├── challenges/pneumoniamnist/ MedMNIST chest X-ray challenge (28×28 grayscale)
 │   │   ├── submissions/            adapters: prediction_csv, python_bundle (+ zip_safety)
-│   │   ├── evaluators/             binary_classification, multiclass_classification
+│   │   ├── evaluators/             binary_classification, multiclass_classification, binary_class_probabilities
 │   │   ├── visualizations/         decision_boundary_arena, generalization_arena (backend half)
 │   │   ├── runners/                DockerRunner: disposable sandbox containers
 │   │   ├── models/                 SQLAlchemy entities
 │   │   ├── schemas/                Pydantic API models
 │   │   ├── services/               sessions, storage, job queue, evaluation pipeline, live snapshot
-│   │   ├── scripts/                seed_demo, export_public_data, build_mnist_small
+│   │   ├── scripts/                seed_demo, export_public_data, build_mnist_small, build_cifar10, build_pneumoniamnist
 │   │   ├── worker.py               evaluation worker process
 │   │   └── main.py                 FastAPI app + static frontend
 │   ├── alembic/                    migrations
@@ -773,6 +805,7 @@ All settings come from environment variables / `.env` (see `.env.example` and
 | `RUNNER_IMAGE` | `dnnls-arena-runner:latest` | sandbox image |
 | `RUNNER_TIMEOUT_SECONDS` | 120 | wall-clock limit |
 | `CIFAR10_ARCHIVE` | challenge-local `cifar10_test.npz` (Docker: `/opt/arena/cifar10_test.npz`) | prepared official CIFAR-10 test split |
+| `PNEUMONIAMNIST_ARCHIVE` | challenge-local `pneumoniamnist_test.npz` (Docker: `/opt/arena/pneumoniamnist_test.npz`) | prepared official 28×28 MedMNIST test split |
 | `RUNNER_CPUS` / `RUNNER_MEMORY` / `RUNNER_PIDS_LIMIT` / `RUNNER_TMP_SIZE` | 1.0 / 1g / 64 / 256m | resource limits |
 | `RUNNER_MOUNT_MODE` | `auto` | `volume` (compose) or `bind` (local) |
 | `RUNNER_DATA_VOLUME` / `RUNNER_VOLUME_MOUNTPOINT` / `RUNNER_HOST_DATA_DIR` | – / `/data` / – | see §6 |

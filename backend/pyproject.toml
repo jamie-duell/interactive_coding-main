@@ -35,6 +35,7 @@ include = ["app*"]
 "app.challenges.moons" = ["*.md", "*.py"]
 "app.challenges.mnist_small" = ["*.md", "*.py", "*.npz"]
 "app.challenges.cifar10" = ["*.md", "*.py", "*.npz"]
+"app.challenges.pneumoniamnist" = ["*.md", "*.py", "*.npz"]
 
 [tool.ruff]
 line-length = 100

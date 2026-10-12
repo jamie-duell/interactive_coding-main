@@ -13,3 +13,4 @@ backend/static/
 .DS_Store
 *.egg-info/
 backend/app/challenges/cifar10/cifar10_test.npz
+backend/app/challenges/pneumoniamnist/pneumoniamnist_test.npz
