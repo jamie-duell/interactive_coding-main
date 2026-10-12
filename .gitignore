@@ -1,0 +1,15 @@
+.env
+/data/
+backend/.venv/
+backend/data/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+frontend/node_modules/
+frontend/dist/
+backend/static/
+*.db
+.DS_Store
+*.egg-info/
+backend/app/challenges/cifar10/cifar10_test.npz
