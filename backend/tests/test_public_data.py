@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from app.scripts.export_public_data import DEFAULT_OUT, PUBLIC_FILES
@@ -13,7 +14,9 @@ from app.scripts.export_public_data import DEFAULT_OUT, PUBLIC_FILES
 @pytest.mark.parametrize("name", list(PUBLIC_FILES))
 def test_committed_public_file_matches_generated(name: str):
     # Windows checkouts with core.autocrlf=true hold CRLF copies; compare content only.
-    committed = (DEFAULT_OUT / name).read_bytes().replace(b"\r\n", b"\n")
+    committed = (DEFAULT_OUT / name).read_bytes()
+    if name.endswith(".csv"):
+        committed = committed.replace(b"\r\n", b"\n")
     assert committed == PUBLIC_FILES[name](), (
         f"{name} is out of date: run `python -m app.scripts.export_public_data`"
     )
@@ -22,6 +25,12 @@ def test_committed_public_file_matches_generated(name: str):
 def test_no_labels_in_public_dir():
     for path in Path(DEFAULT_OUT).glob("*"):
         assert "label" not in path.name.lower()
+        if path.suffix == ".npz":
+            with np.load(path, allow_pickle=False) as archive:
+                assert all(
+                    "label" not in key and key not in {"y_test", "y_train"} for key in archive.files
+                )
+            continue
         header = path.read_text().splitlines()[0]
         if "train" not in path.name:
             assert "label" not in header

@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from app.challenges.captum_deletion import reference
 from app.challenges.mnist_small import data as mnist_data
 from app.challenges.moons import data
 
@@ -21,6 +22,8 @@ PUBLIC_FILES = {
     "sample_predictions.csv": data.sample_predictions_csv,
     # small-data MNIST
     "mnist_train.csv": mnist_data.train_csv,
+    "captum_reference_model.npz": reference.MODEL_PATH.read_bytes,
+    "captum_explanation_data.npz": reference.DATA_PATH.read_bytes,
 }
 
 DEFAULT_OUT = Path(__file__).resolve().parents[3] / "examples" / "data"

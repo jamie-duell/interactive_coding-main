@@ -5,9 +5,9 @@ machine-learning teaching. Students train models in Google Colab, upload a small
 shared web app, the server scores it against hidden labels, and a projector view updates live
 and shows each student's solution.
 
-Four challenges ship with it: **Two Moons — Decision Boundary Challenge**,
-**Small-data MNIST — Fix the Training Recipe**, **CIFAR-10 — Design a CNN**, and
-**PneumoniaMNIST — Classify Chest X-rays**
+Five challenges ship with it: **Two Moons — Decision Boundary Challenge**,
+**Small-data MNIST — Fix the Training Recipe**, **CIFAR-10 — Design a CNN**,
+**PneumoniaMNIST — Classify Chest X-rays**, and **Explainable AI — Captum Deletion Challenge**
 (see [Available challenges](#41-available-challenges)).
 The architecture keeps submission handling, evaluation and visualization as independent,
 swappable modules so very different challenges can be added without rewriting the platform.
@@ -283,9 +283,10 @@ docker compose up -d --build
 4. Students open `http://<TEACHER-IP>:8000`, enter the code and a display name. They appear
    immediately on the projector in the "no evaluated submission yet" row.
 5. Students work in Colab (`examples/moons_colab.ipynb`, `examples/mnist_small_colab.ipynb`,
-   `examples/cifar10_colab.ipynb`, or `examples/pneumoniamnist_colab.ipynb`, also
-   downloadable from the student page). The notebook fetches the public data from
-   `examples/data/` on GitHub, because Colab cannot reach a server on the classroom LAN. Students download their `predictions.csv` or
+   `examples/cifar10_colab.ipynb`, `examples/pneumoniamnist_colab.ipynb`, or
+   `examples/captum_deletion_colab.ipynb`, also downloadable from the student page).
+   Notebooks fetch data from GitHub or the official dataset host, because Colab cannot
+   reach a server on the classroom LAN. Students download their `predictions.csv`, `attributions.npz`, or
    `submission.zip` and upload it on their student page. Their blob moves to its score within a second or two (ZIP bundles take a few seconds
    longer because a sandbox container starts).
 6. Click any blob (or a row of the table) to show that student's solution (decision boundary,
@@ -380,6 +381,46 @@ and **524 validation** images; the server scores **624 official test images**.
   images and official splits. Students must train on training labels and select models
   using validation; test labels are public, so the exercise relies on classroom trust.
 
+**Explainable AI — Captum Deletion Challenge** (`captum_deletion`). Students choose
+and tune a Captum attribution method in [the Colab starter notebook](https://colab.research.google.com/github/jamie-duell/interactive_coding-main/blob/main/examples/captum_deletion_colab.ipynb)
+to minimise **mean deletion AUC**. They explain a frozen 784 → 64 → 32 → 2 ReLU MLP
+trained on the PneumoniaMNIST training split. No classifier training is part of this task.
+
+* The notebook compares Saliency, Input × Gradient, Integrated Gradients, Occlusion,
+  Feature Ablation and NoiseTunnel/SmoothGrad on **32 practice images** from validation.
+  Students tune integration steps, windows/strides, feature groups, noise settings and
+  signed/positive/absolute maps, then explain **64 scoring images** from test. Each image
+  is 28×28 grayscale; class order is normal, pneumonia.
+* For every image, the scorer fixes the target to the **original predicted class**,
+  ranks pixels by submitted importance (largest first, ties by row-major order), and
+  deletes **28 pixels per step** by setting raw pixels to **black (0)**. It measures that
+  same target probability at **29 points**, including 0% and 100% deletion. The score
+  is trapezoidal area over the fraction deleted, averaged across all images. **Lower
+  is better.** This is a confidence-curve AUC, not ROC AUC or confidence-normalised AUC.
+* Students upload **`attributions.npz`**, containing image ids, `(64, 784)` maps, the
+  frozen model digest and a method/settings description. The server aligns maps by
+  id and recomputes the score with its own classifier. Scores and executable code
+  are not accepted. The projector shows the leaderboard, mean deletion curve and
+  original-image/attribution overlays; it preserves each student's lowest score.
+* The fixed weights and public images are committed in the challenge package and
+  mirrored as `examples/data/captum_reference_model.npz` and
+  `examples/data/captum_explanation_data.npz`. Docker builds include these files directly;
+  there is no new server dependency or dataset download for this task. Captum is installed
+  by the Colab notebook. Rebuild with `docker compose up -d --build`, then choose
+  **Explainable AI — Captum Deletion Challenge** on `/teacher`.
+* `python -m app.scripts.build_captum_deletion` is a maintainer tool for regenerating
+  the frozen assets, with `--src <official pneumoniamnist.npz>` optional. It trains only
+  on the training split; internal early stopping also uses a portion of that split.
+  It reports validation accuracy/AUROC, then samples scoring and practice images from
+  the official test and validation splits. Regeneration changes the model digest:
+  update the notebook's expected SHA256 and start a new session rather than comparing
+  scores from different reference models.
+* Method descriptions rely on classroom trust: maps cannot prove they came from Captum.
+  Discuss what a low score means under this particular black-pixel perturbation test.
+  Attribution: [RISE deletion metric](https://github.com/eclique/RISE/blob/master/evaluation.py),
+  [Captum](https://captum.ai/api/index.html), and the MedMNIST/PneumoniaMNIST dataset
+  attribution and CC BY 4.0 licence described above.
+
 The repository is configured for **`jamie-duell/interactive_coding-main`**, branch **`main`**.
 Push these files to that repository before using the direct **Open in Google Colab** links.
 The downloadable notebooks remain available from the student page. If the repository is
@@ -423,9 +464,10 @@ dnnls-arena/
 │   │   ├── challenges/mnist_small/ small-data MNIST challenge (+ committed mnist_small.npz)
 │   │   ├── challenges/cifar10/     CIFAR-10 CNN challenge (test data prepared at build time)
 │   │   ├── challenges/pneumoniamnist/ MedMNIST chest X-ray challenge (28×28 grayscale)
-│   │   ├── submissions/            adapters: prediction_csv, python_bundle (+ zip_safety)
+│   │   ├── challenges/captum_deletion/ frozen classifier, public images, deletion benchmark
+│   │   ├── submissions/            adapters: prediction_csv, python_bundle, attribution_npz
 │   │   ├── evaluators/             binary_classification, multiclass_classification, binary_class_probabilities
-│   │   ├── visualizations/         decision_boundary_arena, generalization_arena (backend half)
+│   │   ├── visualizations/         decision_boundary_arena, generalization_arena, accuracy_leaderboard, deletion_arena
 │   │   ├── runners/                DockerRunner: disposable sandbox containers
 │   │   ├── models/                 SQLAlchemy entities
 │   │   ├── schemas/                Pydantic API models

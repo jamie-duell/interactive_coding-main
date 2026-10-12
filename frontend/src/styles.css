@@ -165,6 +165,13 @@ label.small, label.toggle { flex-direction: row; align-items: center; font-weigh
 }
 
 /* SVG */
+.deletion-curve { display: block; width: 100%; max-width: 620px; }
+.deletion-curve text { fill: var(--muted); font-size: 12px; }
+.xai-examples { display: flex; flex-wrap: wrap; gap: 1rem; }
+.xai-examples figure { margin: 0; max-width: 230px; }
+.xai-examples figcaption { font-size: 0.8rem; margin-top: 0.3rem; }
+.xai-image-pair { display: flex; gap: 0.5rem; }
+.xai-image { width: 100px; height: 100px; image-rendering: pixelated; border: 1px solid var(--line); }
 .accuracy-arena { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); height: 100%; }
 .accuracy-ranking { padding: 1.2rem; overflow: auto; }
 .accuracy-detail { padding: 1.2rem; overflow: auto; border-left: 1px solid var(--line); }

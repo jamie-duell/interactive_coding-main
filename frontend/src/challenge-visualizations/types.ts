@@ -35,6 +35,7 @@ export interface ArenaProps {
 }
 
 export interface SubmissionPreviewProps {
+  scoresHidden?: boolean;
   challenge: ChallengeSummary;
   sessionDisplay: DisplayOut;
   display: SubmissionDisplayOut;

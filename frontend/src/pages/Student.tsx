@@ -185,7 +185,7 @@ export function Student() {
           {plugin.SubmissionPreview && display && latestDisplay && latestSucceeded && (
             <div className="preview">
               <p className="muted small">Your latest evaluated submission (#{latestSucceeded.seq_no})</p>
-              <plugin.SubmissionPreview challenge={me.challenge} sessionDisplay={display} display={latestDisplay} />
+              <plugin.SubmissionPreview challenge={me.challenge} sessionDisplay={display} display={latestDisplay} scoresHidden={me.scores_hidden} />
             </div>
           )}
 
