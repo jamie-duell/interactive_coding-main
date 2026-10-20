@@ -386,11 +386,12 @@ and tune a Captum attribution method in [the Colab starter notebook](https://col
 to minimise **mean deletion AUC**. They explain a frozen 784 → 64 → 32 → 2 ReLU MLP
 trained on the PneumoniaMNIST training split. No classifier training is part of this task.
 
-* The notebook compares Saliency, Input × Gradient, Integrated Gradients, Occlusion,
-  Feature Ablation and NoiseTunnel/SmoothGrad on **32 practice images** from validation.
-  Students tune integration steps, windows/strides, feature groups, noise settings and
-  signed/positive/absolute maps, then explain **64 scoring images** from test. Each image
-  is 28×28 grayscale; class order is normal, pneumonia.
+* The notebook supplies **Saliency only** as a working baseline on **32 practice images**
+  from validation. Students research and implement additional Captum attribution methods,
+  tune their settings, and record practice scores in an experiment table. There is no
+  automatic comparison or method selection: students choose their final implementation
+  themselves, then explain **64 scoring images** from test. Each image is 28×28 grayscale;
+  class order is normal, pneumonia.
 * For every image, the scorer fixes the target to the **original predicted class**,
   ranks pixels by submitted importance (largest first, ties by row-major order), and
   deletes **28 pixels per step** by setting raw pixels to **black (0)**. It measures that

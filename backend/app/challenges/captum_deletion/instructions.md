@@ -1,14 +1,17 @@
 ## Find the Captum method with the lowest deletion score
 
 Use the **Starter Colab notebook** to explain the supplied, frozen PneumoniaMNIST
-classifier. Your job is to choose a **Captum attribution method** and tune its settings,
-such as Integrated Gradients integration steps, Occlusion window/stride, Feature Ablation
-groups, or NoiseTunnel smoothing. This task compares explanations of the same model.
+classifier. The starter implements **Saliency only**, so you can establish a baseline.
+Your job is to research, implement and tune other **Captum attribution methods** to
+find a better explanation. This task compares explanations of the same model.
 
-Start by comparing methods on the **32 practice images**, then generate maps for all
+Evaluate one method at a time on the **32 practice images** and record the results yourself.
+The notebook does not automatically compare methods or select a winner. Choose a method
+using your experiment table, then rerun its implementation and generate maps for all
 **64 scoring images** and export `attributions.npz`. Keep an experiment table explaining
 your choice. The notebook loads the fixed model and data and supplies local scoring,
-plots, and export. Do not retrain or replace the model.
+plots, and export. Update the method name and settings to match your implementation.
+Do not retrain or replace the model.
 
 ### What the deletion score means
 
