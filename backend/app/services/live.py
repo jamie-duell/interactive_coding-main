@@ -81,10 +81,12 @@ def participant_live(db: Session, participant: Participant) -> dict[str, Any]:
         .options(selectinload(Submission.result))
         .order_by(Submission.created_at, Submission.seq_no)
     ).all()
-    return _aggregate(participant, subs, hib)
+    return _aggregate(participant, subs, hib, challenge.leaderboard_tracks)
 
 
-def _aggregate(participant: Participant, subs: list[Submission], hib: bool) -> dict[str, Any]:
+def _aggregate(
+    participant: Participant, subs: list[Submission], hib: bool, tracks=None
+) -> dict[str, Any]:
     best: Submission | None = None
     for s in subs:
         if s.status == "succeeded" and s.result is not None:
@@ -107,6 +109,18 @@ def _aggregate(participant: Participant, subs: list[Submission], hib: bool) -> d
         "latest_score": (
             latest.result.primary_score if latest and latest.result is not None else None
         ),
+        "tracks": {
+            key: _aggregate(
+                participant,
+                [
+                    s
+                    for s in subs
+                    if s.result is not None and s.result.metrics.get("model_family") == key
+                ],
+                hib,
+            )
+            for key in (tracks or {})
+        },
     }
 
 
@@ -123,6 +137,11 @@ def rank_participants(parts: list[dict[str, Any]], higher_is_better: bool) -> No
         p["rank"] = i
     for p in parts:
         p.setdefault("rank", None)
+    track_names = {key for p in parts for key in p.get("tracks", {})}
+    for key in track_names:
+        rank_participants(
+            [p["tracks"][key] for p in parts if key in p.get("tracks", {})], higher_is_better
+        )
 
 
 def live_snapshot(db: Session, session: ClassSession) -> dict[str, Any]:
@@ -144,7 +163,10 @@ def live_snapshot(db: Session, session: ClassSession) -> dict[str, Any]:
     for s in subs:
         by_participant.setdefault(s.participant_id, []).append(s)
     hib = challenge.primary_metric.higher_is_better
-    parts = [_aggregate(p, by_participant.get(p.id, []), hib) for p in participants]
+    parts = [
+        _aggregate(p, by_participant.get(p.id, []), hib, challenge.leaderboard_tracks)
+        for p in participants
+    ]
     rank_participants(parts, hib)
     return {
         "session": session_public(session),

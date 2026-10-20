@@ -10,7 +10,8 @@ import { StatusBadge } from '../components/StatusBadge';
 import { TopBar } from '../components/TopBar';
 import { UploadControl } from '../components/UploadControl';
 import { formatTime, formatValue } from '../lib/format';
-import { colabNotebookUrl } from '../lib/repository';
+import { colabNotebookFileUrl } from '../lib/repository';
+import { GenerativeLeaderboards } from '../challenge-visualizations/generative-arena';
 import { loadParticipant, saveParticipant } from '../lib/storage';
 
 export function Student() {
@@ -61,8 +62,11 @@ export function Student() {
     if (myUpdate) refreshMe();
   }, [myUpdate?.at, myUpdate?.status, refreshMe]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (live.state.session) setMe((m) => (m ? { ...m, session: live.state.session! } : m));
-  }, [live.state.session]);
+    if (live.state.session) {
+      setMe((m) => (m ? { ...m, session: live.state.session!, scores_hidden: live.state.session!.scores_hidden } : m));
+      refreshMe();
+    }
+  }, [live.state.session, refreshMe]);
   useEffect(() => {
     if (live.state.deleted) {
       saveParticipant(null);
@@ -90,7 +94,9 @@ export function Student() {
     );
   }
 
-  const { session, participant } = me;
+  const { session } = me;
+  const participant = live.state.participants.find((p) => p.id === me.participant.id) ?? me.participant;
+  const tracks = Object.entries(me.challenge.leaderboard_tracks ?? {});
   const plugin = getVisualization(me.challenge.visualization);
   const pending = latest && ['uploaded', 'queued', 'running'].includes(latest.status);
   const enabledTypes = (challenge?.submission_types ?? []).filter((t) => session.enabled_submission_types.includes(t.id));
@@ -113,7 +119,15 @@ export function Student() {
       <main className="student-grid">
         <section className="student-side">
           <h2>Your progress</h2>
-          <dl className="stats">
+          {tracks.length ? tracks.map(([key, title]) => {
+            const entry = participant.tracks?.[key];
+            const hidden = session.scores_hidden || me.scores_hidden;
+            return <dl className="stats" key={key}>
+              <div><dt>{title} best score</dt><dd>{hidden ? 'hidden' : formatValue(entry?.best_score, me.challenge.primary_metric.format)}</dd></div>
+              <div><dt>Position</dt><dd>{hidden ? 'hidden' : entry?.rank ? `#${entry.rank}` : '–'}</dd></div>
+              <div><dt>Submissions</dt><dd>{entry?.n_submissions ?? 0}</dd></div>
+            </dl>;
+          }) : <dl className="stats">
             <div>
               <dt>Best {me.challenge.primary_metric.label}</dt>
               <dd>{me.scores_hidden ? 'hidden' : formatValue(participant.best_score, me.challenge.primary_metric.format)}</dd>
@@ -126,7 +140,7 @@ export function Student() {
               <dt>Submissions</dt>
               <dd>{participant.n_submissions}</dd>
             </div>
-          </dl>
+          </dl>}
 
           <h2>Submit</h2>
           {challenge && (
@@ -220,6 +234,7 @@ export function Student() {
 
         <section className="student-main">
           <h1>{me.challenge.title}</h1>
+          {tracks.length > 0 && <GenerativeLeaderboards participants={live.state.participants} challenge={me.challenge} scoresHidden={session.scores_hidden || me.scores_hidden} />}
           {challenge ? (
             <>
               <h2>Resources</h2>
@@ -234,18 +249,12 @@ export function Student() {
                       <span className="muted">— {r.description}</span>
                     </li>
                   ))}
-                <li>
-                  <a href={colabNotebookUrl(challenge.id)} target="_blank" rel="noreferrer">
-                    Open in Google Colab
-                  </a>
-                </li>
-                <li>
-                  {/* one starter notebook per challenge: examples/<challenge id>_colab.ipynb */}
-                  <a href={`/examples/${challenge.id}_colab.ipynb`} download>
-                    Starter Colab notebook
-                  </a>{' '}
-                  <span className="muted">— open in Google Colab (File → Upload notebook)</span>
-                </li>
+                {(challenge.starter_notebooks?.length ? challenge.starter_notebooks : [{ filename: `${challenge.id}_colab.ipynb`, label: 'Starter Colab notebook' }]).map((notebook) => (
+                  <li key={notebook.filename}>
+                    <a href={colabNotebookFileUrl(notebook.filename)} target="_blank" rel="noreferrer">{notebook.label} — open in Colab</a>
+                    {' · '}<a href={`/examples/${notebook.filename}`} download>download .ipynb</a>
+                  </li>
+                ))}
               </ul>
               <Markdown source={challenge.instructions_md} />
               {enabledTypes.length > 0 && (

@@ -36,7 +36,14 @@ export function rankParticipants(parts: ParticipantLive[], higherIsBetter: boole
     return d !== 0 ? d : (a.best_at ?? '').localeCompare(b.best_at ?? '');
   });
   const rank = new Map(scored.map((p, i) => [p.id, i + 1]));
-  return parts.map((p) => ({ ...p, rank: rank.get(p.id) ?? null }));
+  let ranked = parts.map((p) => ({ ...p, rank: rank.get(p.id) ?? null }));
+  const tracks = new Set(parts.flatMap((p) => Object.keys(p.tracks ?? {})));
+  for (const track of tracks) {
+    const entries = rankParticipants(parts.flatMap((p) => p.tracks?.[track] ? [p.tracks[track]] : []), higherIsBetter);
+    const byId = new Map(entries.map((p) => [p.id, p]));
+    ranked = ranked.map((p) => byId.has(p.id) ? { ...p, tracks: { ...p.tracks, [track]: byId.get(p.id)! } } : p);
+  }
+  return ranked;
 }
 
 function reducer(state: LiveState, action: Action): LiveState {

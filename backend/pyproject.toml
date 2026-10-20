@@ -37,6 +37,7 @@ include = ["app*"]
 "app.challenges.cifar10" = ["*.md", "*.py", "*.npz"]
 "app.challenges.pneumoniamnist" = ["*.md", "*.py", "*.npz"]
 "app.challenges.captum_deletion" = ["*.md", "*.py", "*.npz"]
+"app.challenges.generative_models" = ["*.md", "*.py", "*.npz"]
 
 [tool.ruff]
 line-length = 100

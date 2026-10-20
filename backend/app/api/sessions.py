@@ -62,6 +62,16 @@ def me(db: DB, participant: CurrentParticipant, teacher: IsTeacher):
             "best_metrics": None,
             "latest_score": None,
             "rank": None,
+            "tracks": {
+                key: {
+                    **value,
+                    "best_score": None,
+                    "best_metrics": None,
+                    "latest_score": None,
+                    "rank": None,
+                }
+                for key, value in mine.get("tracks", {}).items()
+            },
         }
     return {
         "participant": mine,

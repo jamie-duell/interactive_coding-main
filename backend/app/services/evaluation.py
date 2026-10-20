@@ -122,10 +122,12 @@ def _emit_update(db: Session, sub: Submission) -> None:
     participant = db.get(Participant, sub.participant_id)
     before = _best_before(db, participant, sub)
     live = participant_live(db, participant)
+    family = sub.result.metrics.get("model_family") if sub.result is not None else None
+    standing = live["tracks"].get(family, live)
     improved = (
         sub.status == "succeeded"
-        and live["best_submission_id"] == str(sub.id)
-        and (before is None or live["best_score"] != before)
+        and standing["best_submission_id"] == str(sub.id)
+        and (before is None or standing["best_score"] != before)
     )
     events.emit(
         db,
@@ -142,8 +144,14 @@ def _best_before(db: Session, participant: Participant, current: Submission) -> 
     challenge = challenges.get(db.get(ClassSession, participant.session_id).challenge_id)
     hib = challenge.primary_metric.higher_is_better
     best = None
+    family = current.result.metrics.get("model_family") if current.result is not None else None
     for s in participant.submissions:
         if s.id == current.id or s.status != "succeeded" or s.result is None:
+            continue
+        if (
+            family in challenge.leaderboard_tracks
+            and s.result.metrics.get("model_family") != family
+        ):
             continue
         v = s.result.primary_score
         if best is None or (v > best if hib else v < best):

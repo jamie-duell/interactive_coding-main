@@ -33,6 +33,7 @@ class ChallengeSummary(BaseModel):
     secondary_metrics: list[MetricSpecOut]
     # Every adapter the challenge allows; a session may enable a subset of them.
     submission_types: list[SubmissionTypeOut]
+    leaderboard_tracks: dict[str, str] = Field(default_factory=dict)
 
 
 class ResourceOut(BaseModel):
@@ -47,6 +48,7 @@ class ChallengeDetail(ChallengeSummary):
     submission_instructions_md: dict[str, str]
     resources: list[ResourceOut]
     visualization_config: dict[str, Any]
+    starter_notebooks: list[dict[str, str]] = Field(default_factory=list)
 
 
 class SessionPublic(BaseModel):
@@ -103,6 +105,7 @@ class ParticipantLive(BaseModel):
     latest_score: float | None
     rank: int | None = None
     improved: bool | None = None
+    tracks: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
 
 class JoinResponse(BaseModel):

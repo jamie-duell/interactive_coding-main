@@ -16,6 +16,7 @@ export interface SubmissionTypeInfo {
 }
 
 export interface ChallengeSummary {
+  leaderboard_tracks?: Record<string, string>;
   id: string;
   title: string;
   short_description: string;
@@ -37,6 +38,7 @@ export interface ResourceInfo {
 }
 
 export interface ChallengeDetail extends ChallengeSummary {
+  starter_notebooks?: { filename: string; label: string }[];
   instructions_md: string;
   /** Per-submission-type instructions, keyed by adapter id. */
   submission_instructions_md: Record<string, string>;
@@ -65,6 +67,7 @@ export interface SessionTeacherView extends SessionPublic {
 export type SubmissionStatus = 'uploaded' | 'queued' | 'running' | 'succeeded' | 'failed' | 'timed_out';
 
 export interface ParticipantLive {
+  tracks?: Record<string, ParticipantLive>;
   id: string;
   display_name: string;
   joined_at: string | null;

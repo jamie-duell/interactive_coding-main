@@ -12,6 +12,7 @@ import argparse
 from pathlib import Path
 
 from app.challenges.captum_deletion import reference
+from app.challenges.generative_models import reference as generative_reference
 from app.challenges.mnist_small import data as mnist_data
 from app.challenges.moons import data
 
@@ -24,6 +25,8 @@ PUBLIC_FILES = {
     "mnist_train.csv": mnist_data.train_csv,
     "captum_reference_model.npz": reference.MODEL_PATH.read_bytes,
     "captum_explanation_data.npz": reference.DATA_PATH.read_bytes,
+    "generative_encoder_model.npz": generative_reference.ENCODER_PATH.read_bytes,
+    "generative_reference_distribution.npz": generative_reference.REFERENCE_PATH.read_bytes,
 }
 
 DEFAULT_OUT = Path(__file__).resolve().parents[3] / "examples" / "data"

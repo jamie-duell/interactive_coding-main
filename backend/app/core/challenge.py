@@ -64,6 +64,8 @@ class Challenge:
     adapter_config: dict[str, Any] = field(default_factory=dict)
     evaluator_config: dict[str, Any] = field(default_factory=dict)
     visualization_config: dict[str, Any] = field(default_factory=dict)
+    leaderboard_tracks: dict[str, str] = field(default_factory=dict)
+    starter_notebooks: list[dict[str, str]] = field(default_factory=list)
 
     def get_resource(self, name: str) -> Resource | None:
         for r in self.resources:
@@ -81,6 +83,7 @@ class Challenge:
             "visualization": self.visualization,
             "primary_metric": self.primary_metric.as_dict(),
             "secondary_metrics": [m.as_dict() for m in self.secondary_metrics],
+            "leaderboard_tracks": self.leaderboard_tracks,
         }
 
     def detail(self) -> dict[str, Any]:
@@ -98,4 +101,6 @@ class Challenge:
             ],
             "submission_instructions_md": dict(self.submission_instructions_md),
             "visualization_config": self.visualization_config,
+            "starter_notebooks": self.starter_notebooks
+            or [{"filename": f"{self.id}_colab.ipynb", "label": "Starter Colab notebook"}],
         }

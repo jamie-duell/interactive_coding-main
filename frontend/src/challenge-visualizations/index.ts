@@ -3,9 +3,11 @@ import { accuracyLeaderboard } from './accuracy-leaderboard';
 import { fallbackVisualization } from './fallback';
 import { generalizationArena } from './generalization-arena';
 import { deletionArena } from './deletion-arena';
+import { generativeArena } from './generative-arena';
 import type { VisualizationPlugin } from './types';
 
 const plugins: Record<string, VisualizationPlugin> = {
+  [generativeArena.id]: generativeArena,
   [deletionArena.id]: deletionArena,
   [accuracyLeaderboard.id]: accuracyLeaderboard,
   [decisionBoundaryArena.id]: decisionBoundaryArena,

@@ -25,7 +25,7 @@ export interface ArenaProps {
   sessionDisplay: DisplayOut | null;
   selectedParticipantId: string | null;
   selected: SelectedSubmission;
-  onSelectParticipant: (participantId: string | null) => void;
+  onSelectParticipant: (participantId: string | null, submissionId?: string | null) => void;
   /** participantId -> most recent submission update (for brief highlights). */
   recent: Record<string, RecentUpdate>;
   scoresHidden: boolean;

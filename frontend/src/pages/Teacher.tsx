@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { TopBar } from '../components/TopBar';
 import { formatTime } from '../lib/format';
 import { loadTeacherSecret, saveTeacherSecret } from '../lib/storage';
+import { GenerativeSessionPanel } from '../challenge-visualizations/generative-arena';
 
 export function Teacher() {
   const [secret, setSecret] = useState(loadTeacherSecret());
@@ -229,6 +230,9 @@ export function Teacher() {
                       </details>
                     ))}
                   </div>
+                )}
+                {Object.keys(challenges.find((c) => c.id === s.challenge_id)?.leaderboard_tracks ?? {}).length > 0 && (
+                  <GenerativeSessionPanel sessionId={s.id} teacher />
                 )}
               </li>
             ))}

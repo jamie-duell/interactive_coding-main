@@ -5,9 +5,10 @@ machine-learning teaching. Students train models in Google Colab, upload a small
 shared web app, the server scores it against hidden labels, and a projector view updates live
 and shows each student's solution.
 
-Five challenges ship with it: **Two Moons — Decision Boundary Challenge**,
+Six challenges ship with it: **Two Moons — Decision Boundary Challenge**,
 **Small-data MNIST — Fix the Training Recipe**, **CIFAR-10 — Design a CNN**,
-**PneumoniaMNIST — Classify Chest X-rays**, and **Explainable AI — Captum Deletion Challenge**
+**PneumoniaMNIST — Classify Chest X-rays**, **Explainable AI — Captum Deletion Challenge**,
+and **Generative Models — VAE and Diffusion**
 (see [Available challenges](#41-available-challenges)).
 The architecture keeps submission handling, evaluation and visualization as independent,
 swappable modules so very different challenges can be added without rewriting the platform.
@@ -284,7 +285,8 @@ docker compose up -d --build
    immediately on the projector in the "no evaluated submission yet" row.
 5. Students work in Colab (`examples/moons_colab.ipynb`, `examples/mnist_small_colab.ipynb`,
    `examples/cifar10_colab.ipynb`, `examples/pneumoniamnist_colab.ipynb`, or
-   `examples/captum_deletion_colab.ipynb`, also downloadable from the student page).
+   `examples/captum_deletion_colab.ipynb`, or the two generative notebooks described below,
+   also downloadable from the student page).
    Notebooks fetch data from GitHub or the official dataset host, because Colab cannot
    reach a server on the classroom LAN. Students download their `predictions.csv`, `attributions.npz`, or
    `submission.zip` and upload it on their student page. Their blob moves to its score within a second or two (ZIP bundles take a few seconds
@@ -422,6 +424,46 @@ trained on the PneumoniaMNIST training split. No classifier training is part of 
   [Captum](https://captum.ai/api/index.html), and the MedMNIST/PneumoniaMNIST dataset
   attribution and CC BY 4.0 licence described above.
 
+**Generative Models — VAE and Diffusion** (`generative_models`). Students train either
+family from scratch on PneumoniaMNIST's official 4,708 training images, developing the
+architecture and training recipe in separate notebooks:
+
+* [VAE starter in Colab](https://colab.research.google.com/github/jamie-duell/interactive_coding-main/blob/main/examples/pneumoniamnist_vae_colab.ipynb)
+  — reparameterised latent encoder/decoder, reconstruction plus KL loss, fresh prior samples.
+* [Diffusion starter in Colab](https://colab.research.google.com/github/jamie-duell/interactive_coding-main/blob/main/examples/pneumoniamnist_diffusion_colab.ipynb)
+  — time-conditioned convolutional noise predictor, DDPM training and reverse sampling.
+
+Each notebook trains one baseline for five epochs, keeps the checkpoint with lowest
+validation loss, and exports **256 unconditional generated images** as float32 `(256,28,28)`
+pixels in `[0,1]`. Students edit the architecture and settings; no automatic architecture or
+model-family search is included. GPU Colab is recommended, especially for diffusion.
+
+* **One session, two boards:** VAE and diffusion leaderboards appear together on the student,
+  teacher and projector pages. A student may enter both; best submission, rank and submission
+  count are independent per family. Ties keep the earlier entry. Click a row to view that
+  family's best generated-image gallery.
+* **Lower feature MMD² is better.** The server computes biased RBF MMD² in a frozen
+  PneumoniaMNIST classifier's 32-dimensional hidden-feature space, standardised using training
+  statistics, against 256 fixed held-out feature vectors. The bandwidth is the median squared
+  pairwise reference distance. Both families use the same benchmark and sample count.
+  This is a domain-feature classroom metric, **not Inception-based FID or KID**; diversity and
+  galleries help discuss mode collapse, and scores do not establish clinical realism.
+  VAE and diffusion training losses are not compared on the boards.
+* The `generated_samples` adapter accepts data-only NPZ files containing `samples`,
+  `model_family` (`vae` or `diffusion`), `benchmark_sha256` and `description`. It validates the
+  headers, shape, dtype, finite range and benchmark version before evaluation. Student-supplied
+  scores are not accepted. Arrays cannot prove their generating architecture: keep notebooks
+  as experiment records and enforce the classroom rules against copied images, reconstructions,
+  external/pretrained models and favourable sample selection. Use the fixed sampling seed.
+* Benchmark assets are committed; this task adds no server dependency or runtime dataset
+  download. The encoder reuses the Captum task's frozen classifier, trained only on training
+  data; reference features come from test images. Rebuild statistics with
+  `python -m app.scripts.build_generative_reference` (downloads the verified official archive).
+  If assets change, update both notebooks' digest and start a fresh session. Dataset attribution
+  and CC BY 4.0 licence are the same as the PneumoniaMNIST task above.
+* Update and rebuild `web` and `worker`, then select **Generative Models — VAE and Diffusion**
+  on `/teacher`. Existing sessions retain their own challenge; no database migration is needed.
+
 The repository is configured for **`jamie-duell/interactive_coding-main`**, branch **`main`**.
 Push these files to that repository before using the direct **Open in Google Colab** links.
 The downloadable notebooks remain available from the student page. If the repository is
@@ -449,6 +491,8 @@ Re-running it recreates the demo session.
   show any other evaluated submission of that student.
 * **Follow latest** (projector toggle, on by default) selects the submission that has *just*
   been evaluated, even if it is not that student's best.
+* Challenges with `leaderboard_tracks` apply the same rule independently within each track;
+  the generative task uses `model_family` for its VAE and diffusion boards.
 
 ---
 
@@ -484,7 +528,7 @@ dnnls-arena/
 │   ├── pages/                      Home (join), Student, Teacher, Projector
 │   └── api/                        typed client + SSE hook
 ├── runner-images/python-ml/        sandbox image (numpy, scipy, scikit-learn, torch) + entry script
-├── examples/<id>_colab.ipynb       starter notebooks, one per challenge (linked from the student page)
+├── examples/*_colab.ipynb          starter notebooks (two for the generative task)
 ├── examples/data/                  committed public challenge files (what Colab downloads)
 ├── docker-compose.yml  docker-compose.dev.yml  Dockerfile  Makefile  scripts/arena.ps1
 └── .env.example

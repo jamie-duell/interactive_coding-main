@@ -145,9 +145,9 @@ export function Projector() {
           <label className="small toggle">
             <input type="checkbox" checked={followLatest} onChange={(e) => setFollowLatest(e.target.checked)} /> follow latest
           </label>
-          <button className="linklike small" onClick={() => setShowTable((v) => !v)} aria-expanded={showTable}>
+          {!Object.keys(challenge.leaderboard_tracks ?? {}).length && <button className="linklike small" onClick={() => setShowTable((v) => !v)} aria-expanded={showTable}>
             {showTable ? 'hide table' : 'table'}
-          </button>
+          </button>}
         </div>
       </header>
       <main className="projector-main">
@@ -158,13 +158,13 @@ export function Projector() {
           sessionDisplay={display}
           selectedParticipantId={selectedId}
           selected={{ submission, display: subDisplay, loading }}
-          onSelectParticipant={(id) => selectParticipant(id)}
+          onSelectParticipant={(id, submissionId) => selectParticipant(id, submissionId)}
           recent={recent}
           scoresHidden={scoresHidden}
           reducedMotion={reducedMotion}
           detailPanel={detailPanel}
         />
-        {showTable && (
+        {showTable && !Object.keys(challenge.leaderboard_tracks ?? {}).length && (
           <aside className="table-drawer" aria-label="Leaderboard">
             <Leaderboard participants={participants} challenge={challenge} selectedId={selectedId} onSelect={(id) => selectParticipant(id)} scoresHidden={scoresHidden} />
           </aside>

@@ -7,12 +7,13 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   scoresHidden: boolean;
+  compact?: boolean;
 }
 
 /** Compact, accessible table - a secondary view next to the challenge visualization. */
-export function Leaderboard({ participants, challenge, selectedId, onSelect, scoresHidden }: Props) {
+export function Leaderboard({ participants, challenge, selectedId, onSelect, scoresHidden, compact = false }: Props) {
   const rows = [...participants].sort((a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9) || a.display_name.localeCompare(b.display_name));
-  const secondary = challenge.secondary_metrics.slice(0, 2);
+  const secondary = challenge.secondary_metrics.slice(0, compact ? 1 : 2);
   return (
     <table className="leaderboard">
       <thead>
@@ -22,7 +23,7 @@ export function Leaderboard({ participants, challenge, selectedId, onSelect, sco
           {!scoresHidden && <th scope="col">{challenge.primary_metric.label}</th>}
           {!scoresHidden && secondary.map((m) => <th scope="col" key={m.key}>{m.label}</th>)}
           <th scope="col">Subs</th>
-          <th scope="col">Latest</th>
+          {!compact && <th scope="col">Latest</th>}
         </tr>
       </thead>
       <tbody>
@@ -39,7 +40,7 @@ export function Leaderboard({ participants, challenge, selectedId, onSelect, sco
             {!scoresHidden && <td className="mono">{p.best_score === null ? '–' : formatValue(p.best_score, challenge.primary_metric.format)}</td>}
             {!scoresHidden && secondary.map((m) => <td className="mono" key={m.key}>{p.best_metrics ? formatValue(p.best_metrics[m.key], m.format) : '–'}</td>)}
             <td className="mono">{p.n_submissions}</td>
-            <td className="muted">{p.latest_status ?? '–'} {p.latest_at ? formatTime(p.latest_at) : ''}</td>
+            {!compact && <td className="muted">{p.latest_status ?? '–'} {p.latest_at ? formatTime(p.latest_at) : ''}</td>}
           </tr>
         ))}
         {rows.length === 0 && (
